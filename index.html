@@ -1,1632 +1,390 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediCare Pro - Medical Records Management</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #3b82f6;
-            --primary-dark: #1e40af;
-            --secondary: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #22c55e;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Loading Animation */
-        .loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            transition: opacity 0.5s ease;
-        }
-
-        .loader.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid var(--gray-200);
-            border-top: 3px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Main Layout */
-        .dashboard {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            min-height: 100vh;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid var(--gray-200);
-            padding: 20px 0;
-            position: relative;
-            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .logo {
-            padding: 0 20px 30px;
-            border-bottom: 1px solid var(--gray-200);
-            margin-bottom: 20px;
-        }
-
-        .logo h1 {
-            color: var(--primary);
-            font-size: 1.8rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo span {
-            color: var(--gray-500);
-            font-size: 0.9rem;
-            font-weight: 400;
-        }
-
-        .nav-menu {
-            list-style: none;
-            padding: 0 10px;
-        }
-
-        .nav-item {
-            margin-bottom: 5px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 15px;
-            color: var(--gray-600);
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            background: var(--primary);
-            color: white;
-            transform: translateX(5px);
-        }
-
-        .nav-link i {
-            font-size: 1.1rem;
-            width: 20px;
-        }
-
-        /* Main Content */
-        .main-content {
-            background: var(--gray-50);
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .topbar {
-            background: white;
-            border-bottom: 1px solid var(--gray-200);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .search-bar {
-            display: flex;
-            align-items: center;
-            background: var(--gray-50);
-            border-radius: 25px;
-            padding: 8px 20px;
-            width: 400px;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .search-bar:focus-within {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .search-bar input {
-            border: none;
-            background: none;
-            outline: none;
-            flex: 1;
-            padding: 5px 10px;
-            font-size: 0.95rem;
-        }
-
-        .search-bar i {
-            color: var(--gray-400);
-        }
-
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .notification-btn {
-            position: relative;
-            background: none;
-            border: none;
-            color: var(--gray-500);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-        }
-
-        .notification-btn:hover {
-            background: var(--gray-100);
-            color: var(--primary);
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: var(--danger);
-            color: white;
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 10px;
-            min-width: 16px;
-            text-align: center;
-        }
-
-        .user-avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .user-avatar:hover {
-            transform: scale(1.05);
-        }
-
-        /* Content Area */
-        .content {
-            padding: 30px;
-            max-width: 100%;
-        }
-
-        .page-header {
-            margin-bottom: 30px;
-        }
-
-        .page-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--gray-900);
-            margin-bottom: 5px;
-        }
-
-        .page-subtitle {
-            color: var(--gray-500);
-            font-size: 1rem;
-        }
-
-        /* Dashboard Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--gray-100);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: var(--primary);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-        }
-
-        .stat-icon.patients { background: var(--primary); }
-        .stat-icon.medications { background: var(--secondary); }
-        .stat-icon.procedures { background: var(--warning); }
-        .stat-icon.high-risk { background: var(--danger); }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--gray-900);
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: var(--gray-500);
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .stat-change {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 10px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .stat-change.positive {
-            color: var(--success);
-        }
-
-        .stat-change.negative {
-            color: var(--danger);
-        }
-
-        /* Search & Results */
-        .search-section {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .search-controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            flex: 1;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--gray-700);
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .form-input, .form-select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid var(--gray-200);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-secondary {
-            background: var(--gray-100);
-            color: var(--gray-700);
-        }
-
-        .btn-secondary:hover {
-            background: var(--gray-200);
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        /* Patient Cards */
-        .patients-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-        }
-
-        .patient-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--gray-100);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .patient-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .patient-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .patient-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-
-        .patient-info h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--gray-900);
-            margin-bottom: 2px;
-        }
-
-        .patient-id {
-            color: var(--gray-500);
-            font-size: 0.85rem;
-        }
-
-        .patient-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .patient-detail {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--gray-600);
-            font-size: 0.85rem;
-        }
-
-        .patient-detail i {
-            color: var(--gray-400);
-            width: 12px;
-        }
-
-        .patient-stats {
-            display: flex;
-            justify-content: space-between;
-            padding-top: 15px;
-            border-top: 1px solid var(--gray-100);
-        }
-
-        .patient-stat {
-            text-align: center;
-        }
-
-        .patient-stat-value {
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-
-        .patient-stat-label {
-            font-size: 0.75rem;
-            color: var(--gray-500);
-            margin-top: 2px;
-        }
-
-        .risk-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .risk-low { background: rgba(34, 197, 94, 0.1); color: var(--success); }
-        .risk-medium { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-        .risk-high { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        .risk-critical { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-
-        /* Modal */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .modal.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            max-width: 800px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-
-        .modal.active .modal-content {
-            transform: scale(1);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--gray-900);
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--gray-400);
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-        }
-
-        .close-btn:hover {
-            background: var(--gray-100);
-            color: var(--gray-600);
-        }
-
-        /* Timeline */
-        .timeline {
-            position: relative;
-            padding-left: 30px;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 15px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: var(--gray-200);
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 25px;
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            border: 1px solid var(--gray-200);
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -37px;
-            top: 20px;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--primary);
-            border: 3px solid white;
-            box-shadow: 0 0 0 2px var(--gray-200);
-        }
-
-        .timeline-date {
-            font-size: 0.85rem;
-            color: var(--gray-500);
-            margin-bottom: 5px;
-        }
-
-        .timeline-content h4 {
-            color: var(--gray-900);
-            margin-bottom: 5px;
-        }
-
-        .timeline-content p {
-            color: var(--gray-600);
-            font-size: 0.9rem;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .dashboard {
-                grid-template-columns: 1fr;
+<script>
+    // API Configuration - Update this with your actual ngrok URL
+    const API_BASE_URL = 'http://localhost:8000'; // Change this to your ngrok URL when running
+
+    // Global state
+    let currentPage = 'dashboard';
+    let allPatients = [];
+    let dashboardStats = {};
+
+    // Utility Functions
+    function showLoader() {
+        document.getElementById('loader').classList.remove('hidden');
+    }
+
+    function hideLoader() {
+        document.getElementById('loader').classList.add('hidden');
+    }
+
+    function showAlert(message, type = 'success') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'exclamation-triangle'}"></i>
+            ${message}
+        `;
+
+        const content = document.getElementById('contentArea');
+        content.insertBefore(alertDiv, content.firstChild);
+
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    // API Functions
+    async function apiCall(endpoint, options = {}) {
+        try {
+            showLoader();
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
-            .sidebar {
-                position: fixed;
-                left: -280px;
-                top: 0;
-                height: 100vh;
-                z-index: 1000;
-                transition: left 0.3s ease;
-            }
-            
-            .sidebar.mobile-open {
-                left: 0;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .patients-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .search-controls {
-                flex-direction: column;
-            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('API Error:', error);
+            showAlert(`API Error: ${error.message}. Make sure your API server is running!`, 'error');
+            throw error;
+        } finally {
+            hideLoader();
         }
+    }
 
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in {
-            animation: fadeInUp 0.6s ease;
-        }
-
-        .fade-in-delay-1 {
-            animation: fadeInUp 0.6s ease 0.1s both;
-        }
-
-        .fade-in-delay-2 {
-            animation: fadeInUp 0.6s ease 0.2s both;
-        }
-
-        .fade-in-delay-3 {
-            animation: fadeInUp 0.6s ease 0.3s both;
-        }
-
-        /* Error/Success Messages */
-        .alert {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 500;
-        }
-
-        .alert-success {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            color: var(--success);
-        }
-
-        .alert-error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: var(--danger);
-        }
-
-        .alert-warning {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            color: var(--warning);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--gray-500);
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-
-        .empty-state h3 {
-            margin-bottom: 10px;
-            color: var(--gray-700);
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .quick-action {
-            padding: 6px 12px;
-            background: var(--gray-100);
-            border: none;
-            border-radius: 6px;
-            color: var(--gray-600);
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .quick-action:hover {
-            background: var(--primary);
-            color: white;
-        }
-    </style>
-</head>
-<body>
-    <!-- Loading Spinner -->
-    <div class="loader" id="loader">
-        <div class="spinner"></div>
-    </div>
-
-    <div class="dashboard">
-        <!-- Sidebar -->
-        <nav class="sidebar">
-            <div class="logo">
-                <h1><i class="fas fa-stethoscope"></i> MediCare Pro</h1>
-                <span>Medical Records System</span>
-            </div>
-            
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active" data-page="dashboard">
-                        <i class="fas fa-chart-pie"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="patients">
-                        <i class="fas fa-users"></i>
-                        Patients
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="search">
-                        <i class="fas fa-search"></i>
-                        Search
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="high-risk">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        High Risk
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="analytics">
-                        <i class="fas fa-chart-bar"></i>
-                        Analytics
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="settings">
-                        <i class="fas fa-cog"></i>
-                        Settings
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Topbar -->
-            <header class="topbar">
-                <div class="search-bar">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search patients, medications, procedures..." id="globalSearch">
-                </div>
-                
-                <div class="user-menu">
-                    <button class="notification-btn">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">3</span>
-                    </button>
-                    <div class="user-avatar">JD</div>
-                </div>
-            </header>
-
-            <!-- Content Area -->
-            <div class="content" id="contentArea">
-                <!-- Dashboard Page -->
-                <div id="dashboard-page" class="page active">
-                    <div class="page-header fade-in">
-                        <h1 class="page-title">Dashboard</h1>
-                        <p class="page-subtitle">Medical records overview and key metrics</p>
-                    </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-card fade-in-delay-1">
-                            <div class="stat-header">
-                                <div class="stat-icon patients">
-                                    <i class="fas fa-users"></i>
-                                </div>
-                            </div>
-                            <div class="stat-value" id="totalPatients">-</div>
-                            <div class="stat-label">Total Patients</div>
-                            <div class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i>
-                                <span>12% from last month</span>
-                            </div>
-                        </div>
-
-                        <div class="stat-card fade-in-delay-2">
-                            <div class="stat-header">
-                                <div class="stat-icon medications">
-                                    <i class="fas fa-pills"></i>
-                                </div>
-                            </div>
-                            <div class="stat-value" id="totalMedications">-</div>
-                            <div class="stat-label">Active Medications</div>
-                            <div class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i>
-                                <span>8% from last month</span>
-                            </div>
-                        </div>
-
-                        <div class="stat-card fade-in-delay-3">
-                            <div class="stat-header">
-                                <div class="stat-icon procedures">
-                                    <i class="fas fa-procedures"></i>
-                                </div>
-                            </div>
-                            <div class="stat-value" id="totalProcedures">-</div>
-                            <div class="stat-label">Procedures</div>
-                            <div class="stat-change negative">
-                                <i class="fas fa-arrow-down"></i>
-                                <span>3% from last month</span>
-                            </div>
-                        </div>
-
-                        <div class="stat-card fade-in-delay-3">
-                            <div class="stat-header">
-                                <div class="stat-icon high-risk">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                            </div>
-                            <div class="stat-value" id="highRiskPatients">-</div>
-                            <div class="stat-label">High Risk Patients</div>
-                            <div class="stat-change negative">
-                                <i class="fas fa-arrow-up"></i>
-                                <span>5% from last month</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="search-section fade-in">
-                        <h3 style="margin-bottom: 20px; color: var(--gray-900); font-size: 1.3rem;">
-                            <i class="fas fa-search" style="margin-right: 10px; color: var(--primary);"></i>
-                            Quick Patient Search
-                        </h3>
-                        <div class="search-controls">
-                            <div class="form-group">
-                                <label class="form-label">Search Query</label>
-                                <input type="text" class="form-input" id="quickSearch" placeholder="Patient name, ID, condition, medication...">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Search Type</label>
-                                <select class="form-select" id="searchType">
-                                    <option value="fuzzy">Smart Search (AI)</option>
-                                    <option value="exact">Exact Match</option>
-                                </select>
-                            </div>
-                            <div class="form-group" style="display: flex; align-items: end;">
-                                <button class="btn btn-primary" onclick="performQuickSearch()">
-                                    <i class="fas fa-search"></i>
-                                    Search
-                                </button>
-                            </div>
-                        </div>
-                        <div id="quickSearchResults"></div>
-                    </div>
-                </div>
-
-                <!-- Other pages will be dynamically loaded here -->
-                <div id="dynamic-content" style="display: none;"></div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Patient Details Modal -->
-    <div class="modal" id="patientModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalPatientName">Patient Details</h2>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
-            </div>
-            <div id="modalContent">
-                <!-- Dynamic content will be loaded here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Configuration: Update this with your actual API URL -->
-    <script>
-        // API Configuration - Update this with your actual ngrok URL
-        const API_BASE_URL = 'http://localhost:8000'; // Change this to your ngrok URL when running
-        
-        // Global state
-        let currentPage = 'dashboard';
-        let allPatients = [];
-        let dashboardStats = {};
-
-        // Utility Functions
-        function showLoader() {
-            document.getElementById('loader').classList.remove('hidden');
-        }
-
-        function hideLoader() {
-            document.getElementById('loader').classList.add('hidden');
-        }
-
-        function showAlert(message, type = 'success') {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'exclamation-triangle'}"></i>
-                ${message}
-            `;
-            
-            const content = document.getElementById('contentArea');
-            content.insertBefore(alertDiv, content.firstChild);
-            
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
-        }
-
-        // API Functions
-        async function apiCall(endpoint, options = {}) {
-            try {
-                showLoader();
-                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers
-                    },
-                    ...options
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error('API Error:', error);
-                showAlert(`API Error: ${error.message}. Make sure your API server is running!`, 'error');
-                throw error;
-            } finally {
-                hideLoader();
-            }
-        }
-
-        async function loadDashboardStats() {
-            try {
-                const stats = await apiCall('/stats/');
-                if (stats.status === 'success') {
-                    dashboardStats = stats.data;
-                    updateDashboardUI();
-                }
-            } catch (error) {
-                // Show fallback data if API fails
-                dashboardStats = {
-                    database_overview: {
-                        total_patients: 30,
-                        total_medications: 89,
-                        total_procedures: 45,
-                        total_conditions: 67,
-                        total_visits: 156
-                    }
-                };
+    async function loadDashboardStats() {
+        try {
+            const stats = await apiCall('/stats/');
+            if (stats.status === 'success') {
+                dashboardStats = stats.data;
                 updateDashboardUI();
             }
-        }
-
-        function updateDashboardUI() {
-            const overview = dashboardStats.database_overview || {};
-            document.getElementById('totalPatients').textContent = overview.total_patients || '30';
-            document.getElementById('totalMedications').textContent = overview.total_medications || '89';
-            document.getElementById('totalProcedures').textContent = overview.total_procedures || '45';
-            document.getElementById('highRiskPatients').textContent = Math.ceil((overview.total_patients || 30) * 0.15);
-        }
-
-        async function performQuickSearch() {
-            const query = document.getElementById('quickSearch').value.trim();
-            const searchType = document.getElementById('searchType').value;
-            
-            if (!query) {
-                showAlert('Please enter a search query', 'warning');
-                return;
-            }
-
-            try {
-                const results = await apiCall(`/patients/search/${encodeURIComponent(query)}?search_type=${searchType}&limit=10`);
-                if (results.status === 'success') {
-                    displaySearchResults(results.data.patients || [], 'quickSearchResults');
-                    if (results.data.patients?.length === 0) {
-                        showAlert('No patients found matching your search', 'warning');
-                    }
+        } catch (error) {
+            // Show fallback data if API fails
+            dashboardStats = {
+                database_overview: {
+                    total_patients: 30,
+                    total_medications: 89,
+                    total_procedures: 45,
+                    total_conditions: 67,
+                    total_visits: 156
                 }
-            } catch (error) {
-                // Show sample results if API fails
-                displaySampleResults('quickSearchResults');
-            }
-        }
-
-        function displaySearchResults(patients, containerId) {
-            const container = document.getElementById(containerId);
-            
-            if (!patients || patients.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-search"></i>
-                        <h3>No Results Found</h3>
-                        <p>Try adjusting your search criteria</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const patientsHTML = patients.slice(0, 6).map(patient => {
-                const initials = getPatientInitials(patient.first_name, patient.last_name);
-                const riskLevel = getRiskLevel(patient);
-                
-                return `
-                    <div class="patient-card" onclick="showPatientDetails('${patient.patient_id}')">
-                        <div class="patient-header">
-                            <div class="patient-avatar">${initials}</div>
-                            <div class="patient-info">
-                                <h3>${patient.first_name} ${patient.last_name}</h3>
-                                <div class="patient-id">ID: ${patient.patient_id}</div>
-                            </div>
-                            <div class="risk-badge risk-${riskLevel.toLowerCase()}">${riskLevel}</div>
-                        </div>
-                        
-                        <div class="patient-details">
-                            <div class="patient-detail">
-                                <i class="fas fa-birthday-cake"></i>
-                                <span>${formatDate(patient.date_of_birth)}</span>
-                            </div>
-                            <div class="patient-detail">
-                                <i class="fas fa-venus-mars"></i>
-                                <span>${patient.gender}</span>
-                            </div>
-                            <div class="patient-detail">
-                                <i class="fas fa-phone"></i>
-                                <span>${patient.phone || 'N/A'}</span>
-                            </div>
-                            <div class="patient-detail">
-                                <i class="fas fa-envelope"></i>
-                                <span>${patient.email || 'N/A'}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="patient-stats">
-                            <div class="patient-stat">
-                                <div class="patient-stat-value">${Math.floor(Math.random() * 5) + 2}</div>
-                                <div class="patient-stat-label">Medications</div>
-                            </div>
-                            <div class="patient-stat">
-                                <div class="patient-stat-value">${Math.floor(Math.random() * 3) + 1}</div>
-                                <div class="patient-stat-label">Procedures</div>
-                            </div>
-                            <div class="patient-stat">
-                                <div class="patient-stat-value">${Math.floor(Math.random() * 4) + 1}</div>
-                                <div class="patient-stat-label">Visits</div>
-                            </div>
-                        </div>
-                        
-                        <div class="quick-actions">
-                            <button class="quick-action" onclick="event.stopPropagation(); viewTimeline('${patient.patient_id}')">
-                                <i class="fas fa-clock"></i> Timeline
-                            </button>
-                            <button class="quick-action" onclick="event.stopPropagation(); checkRisk('${patient.patient_id}')">
-                                <i class="fas fa-chart-line"></i> Risk
-                            </button>
-                            <button class="quick-action" onclick="event.stopPropagation(); checkInteractions('${patient.patient_id}')">
-                                <i class="fas fa-pills"></i> Drugs
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            container.innerHTML = `
-                <div class="patients-grid" style="margin-top: 20px;">
-                    ${patientsHTML}
-                </div>
-            `;
-        }
-
-        function displaySampleResults(containerId) {
-            // Sample data for when API is not available
-            const samplePatients = [
-                {
-                    patient_id: 'P001',
-                    first_name: 'John',
-                    last_name: 'Smith',
-                    date_of_birth: '1980-05-15',
-                    gender: 'Male',
-                    phone: '(555) 123-4567',
-                    email: 'john.smith@email.com'
-                },
-                {
-                    patient_id: 'P002',
-                    first_name: 'Sarah',
-                    last_name: 'Johnson',
-                    date_of_birth: '1975-08-22',
-                    gender: 'Female',
-                    phone: '(555) 234-5678',
-                    email: 'sarah.johnson@email.com'
-                },
-                {
-                    patient_id: 'P003',
-                    first_name: 'Michael',
-                    last_name: 'Davis',
-                    date_of_birth: '1990-12-03',
-                    gender: 'Male',
-                    phone: '(555) 345-6789',
-                    email: 'michael.davis@email.com'
-                }
-            ];
-            
-            displaySearchResults(samplePatients, containerId);
-            showAlert('Showing sample data - API server not connected', 'warning');
-        }
-
-        // Patient Detail Functions
-        async function showPatientDetails(patientId) {
-            try {
-                const patientData = await apiCall(`/patients/${patientId}`);
-                if (patientData.status === 'success') {
-                    displayPatientModal(patientData.data);
-                }
-            } catch (error) {
-                // Show sample patient data if API fails
-                displaySamplePatientModal(patientId);
-            }
-        }
-
-        function displayPatientModal(data) {
-            const patient = data.patient;
-            const medications = data.medications || [];
-            const procedures = data.procedures || [];
-            const conditions = data.conditions || [];
-            const visits = data.visits || [];
-
-            document.getElementById('modalPatientName').textContent = `${patient.first_name} ${patient.last_name}`;
-            
-            document.getElementById('modalContent').innerHTML = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-                    <div>
-                        <h4 style="margin-bottom: 10px; color: var(--gray-900);">Patient Information</h4>
-                        <div style="background: var(--gray-50); padding: 15px; border-radius: 8px;">
-                            <div style="margin-bottom: 8px;"><strong>ID:</strong> ${patient.patient_id}</div>
-                            <div style="margin-bottom: 8px;"><strong>Date of Birth:</strong> ${formatDate(patient.date_of_birth)}</div>
-                            <div style="margin-bottom: 8px;"><strong>Gender:</strong> ${patient.gender}</div>
-                            <div style="margin-bottom: 8px;"><strong>Phone:</strong> ${patient.phone || 'N/A'}</div>
-                            <div><strong>Email:</strong> ${patient.email || 'N/A'}</div>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 style="margin-bottom: 10px; color: var(--gray-900);">Quick Stats</h4>
-                        <div style="background: var(--gray-50); padding: 15px; border-radius: 8px;">
-                            <div style="margin-bottom: 8px;"><strong>Medications:</strong> ${medications.length}</div>
-                            <div style="margin-bottom: 8px;"><strong>Procedures:</strong> ${procedures.length}</div>
-                            <div style="margin-bottom: 8px;"><strong>Conditions:</strong> ${conditions.length}</div>
-                            <div><strong>Visits:</strong> ${visits.length}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 25px;">
-                    <h4 style="margin-bottom: 15px; color: var(--gray-900);">
-                        <i class="fas fa-pills" style="color: var(--secondary); margin-right: 8px;"></i>
-                        Current Medications
-                    </h4>
-                    ${medications.length > 0 ? medications.slice(0, 5).map(med => `
-                        <div style="background: white; border: 1px solid var(--gray-200); padding: 12px; margin-bottom: 8px; border-radius: 6px;">
-                            <div style="display: flex; justify-content: between; align-items: center;">
-                                <div>
-                                    <strong>${med.medication_name}</strong> - ${med.dosage}
-                                    <div style="font-size: 0.85rem; color: var(--gray-600);">${med.frequency} | For: ${med.condition_treated}</div>
-                                </div>
-                                <span class="risk-badge ${med.status === 'Active' ? 'risk-low' : 'risk-medium'}">${med.status}</span>
-                            </div>
-                        </div>
-                    `).join('') : '<p style="color: var(--gray-500);">No medications recorded</p>'}
-                </div>
-
-                <div style="margin-bottom: 25px;">
-                    <h4 style="margin-bottom: 15px; color: var(--gray-900);">
-                        <i class="fas fa-procedures" style="color: var(--warning); margin-right: 8px;"></i>
-                        Recent Procedures
-                    </h4>
-                    ${procedures.length > 0 ? procedures.slice(0, 3).map(proc => `
-                        <div style="background: white; border: 1px solid var(--gray-200); padding: 12px; margin-bottom: 8px; border-radius: 6px;">
-                            <div><strong>${proc.procedure_name}</strong> (${proc.procedure_type})</div>
-                            <div style="font-size: 0.85rem; color: var(--gray-600);">
-                                ${formatDate(proc.procedure_date)} | Dr. ${proc.performing_doctor}
-                            </div>
-                            <div style="font-size: 0.85rem; color: var(--gray-600);">
-                                Outcome: ${proc.outcome}
-                            </div>
-                        </div>
-                    `).join('') : '<p style="color: var(--gray-500);">No procedures recorded</p>'}
-                </div>
-
-                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 30px;">
-                    <button class="btn btn-primary" onclick="viewTimeline('${patient.patient_id}')">
-                        <i class="fas fa-clock"></i> View Timeline
-                    </button>
-                    <button class="btn btn-secondary" onclick="checkRisk('${patient.patient_id}')">
-                        <i class="fas fa-chart-line"></i> Risk Assessment
-                    </button>
-                    <button class="btn btn-secondary" onclick="checkInteractions('${patient.patient_id}')">
-                        <i class="fas fa-pills"></i> Drug Interactions
-                    </button>
-                </div>
-            `;
-
-            document.getElementById('patientModal').classList.add('active');
-        }
-
-        function displaySamplePatientModal(patientId) {
-            // Sample patient data when API is not available
-            const sampleData = {
-                patient: {
-                    patient_id: patientId,
-                    first_name: 'John',
-                    last_name: 'Smith',
-                    date_of_birth: '1980-05-15',
-                    gender: 'Male',
-                    phone: '(555) 123-4567',
-                    email: 'john.smith@email.com'
-                },
-                medications: [
-                    {
-                        medication_name: 'Lisinopril',
-                        dosage: '10mg',
-                        frequency: 'Once daily',
-                        condition_treated: 'Hypertension',
-                        status: 'Active'
-                    },
-                    {
-                        medication_name: 'Metformin',
-                        dosage: '500mg',
-                        frequency: 'Twice daily',
-                        condition_treated: 'Diabetes',
-                        status: 'Active'
-                    }
-                ],
-                procedures: [
-                    {
-                        procedure_name: 'Annual Checkup',
-                        procedure_type: 'Diagnostic',
-                        procedure_date: '2024-01-15',
-                        performing_doctor: 'Johnson',
-                        outcome: 'Normal'
-                    }
-                ]
             };
-            
-            displayPatientModal(sampleData);
-            showAlert('Showing sample data - API server not connected', 'warning');
+            updateDashboardUI();
+        }
+    }
+
+    function updateDashboardUI() {
+        const overview = dashboardStats.database_overview || {};
+        document.getElementById('totalPatients').textContent = overview.total_patients || '30';
+        document.getElementById('totalMedications').textContent = overview.total_medications || '89';
+        document.getElementById('totalProcedures').textContent = overview.total_procedures || '45';
+        document.getElementById('highRiskPatients').textContent = Math.ceil((overview.total_patients || 30) * 0.15);
+    }
+
+    async function performQuickSearch() {
+        const query = document.getElementById('quickSearch').value.trim();
+        const searchType = document.getElementById('searchType').value;
+
+        if (!query) {
+            showAlert('Please enter a search query', 'warning');
+            return;
         }
 
-        // Navigation Functions
-        function switchPage(pageName) {
-            // Update navigation
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
-            
-            currentPage = pageName;
-            
-            // Load page content
-            loadPageContent(pageName);
-        }
-
-        async function loadPageContent(pageName) {
-            const dynamicContent = document.getElementById('dynamic-content');
-            const dashboardPage = document.getElementById('dashboard-page');
-            
-            if (pageName === 'dashboard') {
-                dashboardPage.style.display = 'block';
-                dynamicContent.style.display = 'none';
-                await loadDashboardStats();
-                return;
-            }
-            
-            dashboardPage.style.display = 'none';
-            dynamicContent.style.display = 'block';
-            
-            let content = '';
-            
-            switch (pageName) {
-                case 'patients':
-                    content = await generatePatientsPage();
-                    break;
-                case 'search':
-                    content = generateSearchPage();
-                    break;
-                case 'high-risk':
-                    content = await generateHighRiskPage();
-                    break;
-                case 'analytics':
-                    content = generateAnalyticsPage();
-                    break;
-                case 'settings':
-                    content = generateSettingsPage();
-                    break;
-                default:
-                    content = '<h2>Page not found</h2>';
-            }
-            
-            dynamicContent.innerHTML = content;
-        }
-
-        async function generatePatientsPage() {
-            try {
-                const patients = await apiCall('/patients/all?limit=50');
-                if (patients.status === 'success') {
-                    return `
-                        <div class="page-header fade-in">
-                            <h1 class="page-title">All Patients</h1>
-                            <p class="page-subtitle">Manage and view all patient records</p>
-                        </div>
-                        <div id="allPatientsContainer">
-                            ${generatePatientsGrid(patients.data.patients)}
-                        </div>
-                    `;
+        try {
+            const results = await apiCall(`/patients/search/${encodeURIComponent(query)}?search_type=${searchType}&limit=10`);
+            if (results.status === 'success') {
+                displaySearchResults(results.data.patients || [], 'quickSearchResults');
+                if (results.data.patients?.length === 0) {
+                    showAlert('No patients found matching your search', 'warning');
                 }
-            } catch (error) {
-                // Return sample patients page
-                return generateSamplePatientsPage();
             }
+        } catch (error) {
+            // Show sample results if API fails
+            displaySampleResults('quickSearchResults');
         }
+    }
 
-        function generateSamplePatientsPage() {
-            const samplePatients = Array.from({length: 12}, (_, i) => ({
-                patient_id: `P${String(i + 1).padStart(3, '0')}`,
-                first_name: ['John', 'Sarah', 'Michael', 'Emily', 'David', 'Lisa', 'Robert', 'Maria', 'James', 'Jennifer', 'William', 'Patricia'][i],
-                last_name: ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Anderson', 'Taylor'][i],
-                date_of_birth: `19${60 + Math.floor(Math.random() * 40)}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
-                gender: i % 2 === 0 ? 'Male' : 'Female',
-                phone: `(555) ${String(Math.floor(Math.random() * 900) + 100)}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-                email: `${['John', 'Sarah', 'Michael', 'Emily', 'David', 'Lisa', 'Robert', 'Maria', 'James', 'Jennifer', 'William', 'Patricia'][i].toLowerCase()}.${['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Anderson', 'Taylor'][i].toLowerCase()}@email.com`
-            }));
+    function displaySearchResults(patients, containerId) {
+        const container = document.getElementById(containerId);
 
-            return `
-                <div class="page-header fade-in">
-                    <h1 class="page-title">All Patients</h1>
-                    <p class="page-subtitle">Showing sample data - API server not connected</p>
-                </div>
-                <div id="allPatientsContainer">
-                    ${generatePatientsGrid(samplePatients)}
+        if (!patients || patients.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <h3>No Results Found</h3>
+                    <p>Try adjusting your search criteria</p>
                 </div>
             `;
+            return;
         }
 
-        function generatePatientsGrid(patients) {
-            if (!patients || patients.length === 0) {
-                return `
-                    <div class="empty-state">
-                        <i class="fas fa-users"></i>
-                        <h3>No Patients Found</h3>
-                        <p>No patient records available</p>
-                    </div>
-                `;
-            }
+        const patientsHTML = patients.slice(0, 6).map(patient => {
+            const initials = getPatientInitials(patient.first_name, patient.last_name);
+            const riskLevel = getRiskLevel(patient);
 
-            const patientsHTML = patients.map(patient => {
-                const initials = getPatientInitials(patient.first_name, patient.last_name);
-                const riskLevel = getRiskLevel(patient);
-                
-                return `
-                    <div class="patient-card fade-in" onclick="showPatientDetails('${patient.patient_id}')">
-                        <div class="patient-header">
-                            <div class="patient-avatar">${initials}</div>
-                            <div class="patient-info">
-                                <h3>${patient.first_name} ${patient.last_name}</h3>
-                                <div class="patient-id">ID: ${patient.patient_id}</div>
-                            </div>
-                            <div class="risk-badge risk-${riskLevel.toLowerCase()}">${riskLevel}</div>
-                        </div>
-                        
-                        <div class="patient-details">
-                            <div class="patient-detail">
-                                <i class="fas fa-birthday-cake"></i>
-                                <span>${formatDate(patient.date_of_birth)}</span>
-                            </div>
-                            <div class="patient-detail">
-                                <i class="fas fa-venus-mars"></i>
-                                <span>${patient.gender}</span>
-                            </div>
-                            <div class="patient-detail">
-                                <i class="fas fa-phone"></i>
-                                <span>${patient.phone || 'N/A'}</span>
-                            </div>
-                            <div class="patient-detail">
-                                <i class="fas fa-envelope"></i>
-                                <span>${patient.email || 'N/A'}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="patient-stats">
-                            <div class="patient-stat">
-                                <div class="patient-stat-value">${Math.floor(Math.random() * 5) + 2}</div>
-                                <div class="patient-stat-label">Medications</div>
-                            </div>
-                            <div class="patient-stat">
-                                <div class="patient-stat-value">${Math.floor(Math.random() * 3) + 1}</div>
-                                <div class="patient-stat-label">Procedures</div>
-                            </div>
-                            <div class="patient-stat">
-                                <div class="patient-stat-value">${Math.floor(Math.random() * 4) + 1}</div>
-                                <div class="patient-stat-label">Visits</div>
-                            </div>
-                        </div>
-                        
-                        <div class="quick-actions">
-                            <button class="quick-action" onclick="event.stopPropagation(); viewTimeline('${patient.patient_id}')">
-                                <i class="fas fa-clock"></i> Timeline
-                            </button>
-                            <button class="quick-action" onclick="event.stopPropagation(); checkRisk('${patient.patient_id}')">
-                                <i class="fas fa-chart-line"></i> Risk
-                            </button>
-                            <button class="quick-action" onclick="event.stopPropagation(); checkInteractions('${patient.patient_id}')">
-                                <i class="fas fa-pills"></i> Drugs
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            return `<div class="patients-grid">${patientsHTML}</div>`;
-        }
-
-        function generateSearchPage() {
             return `
-                <div class="page-header fade-in">
-                    <h1 class="page-title">Advanced Search</h1>
-                    <p class="page-subtitle">Search patients using advanced ML-powered queries</p>
-                </div>
-                
-                <div class="search-section fade-in">
-                    <div class="search-controls" style="grid-template-columns: 2fr 1fr 1fr auto;">
-                        <div class="form-group">
-                            <label class="form-label">Search Query</label>
-                            <input type="text" class="form-input" id="advancedSearch" placeholder="Try: 'diabetes patients', 'high blood pressure medication', 'recent surgery'...">
+                <div class="patient-card" onclick="showPatientDetails('${patient.patient_id}')">
+                    <div class="patient-header">
+                        <div class="patient-avatar">${initials}</div>
+                        <div class="patient-info">
+                            <h3>${patient.first_name} ${patient.last_name}</h3>
+                            <div class="patient-id">ID: ${patient.patient_id}</div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Search Type</label>
-                            <select class="form-select" id="advancedSearchType">
-                                <option value="fuzzy">Smart Search (AI)</option>
-                                <option value="exact">Exact Match</option>
-                            </select>
+                        <div class="risk-badge risk-${riskLevel.toLowerCase()}">${riskLevel}</div>
+                    </div>
+
+                    <div class="patient-details">
+                        <div class="patient-detail">
+                            <i class="fas fa-birthday-cake"></i>
+                            <span>${formatDate(patient.date_of_birth)}</span>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Results Limit</label>
-                            <select class="form-select" id="searchLimit">
-                                <option value="10">10 Results</option>
-                                <option value="25">25 Results</option>
-                                <option value="50">50 Results</option>
-                            </select>
+                        <div class="patient-detail">
+                            <i class="fas fa-venus-mars"></i>
+                            <span>${patient.gender}</span>
                         </div>
-                        <div class="form-group" style="display: flex; align-items: end;">
-                            <button class="btn btn-primary" onclick="performAdvancedSearch()">
-                                <i class="fas fa-search"></i>
-                                Search
-                            </button>
+                        <div class="patient-detail">
+                            <i class="fas fa-phone"></i>
+                            <span>${patient.phone || 'N/A'}</span>
+                        </div>
+                        <div class="patient-detail">
+                            <i class="fas fa-envelope"></i>
+                            <span>${patient.email || 'N/A'}</span>
                         </div>
                     </div>
-                    <div id="advancedSearchResults"></div>
-                </div>
 
-                <div style="background: white; border-radius: 12px; padding: 25px; margin-top: 20px;">
-                    <h3 style="margin-bottom: 20px; color: var(--gray-900);">
-                        <i class="fas fa-lightbulb" style="color: var(--warning); margin-right: 10px;"></i>
-                        Search Examples
-                    </h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
-                        <div style="background: var(--gray-50); padding: 15px; border-radius: 8px; cursor: pointer;" onclick="document.getElementById('advancedSearch').value='diabetes medication'; performAdvancedSearch();">
-                            <strong>Diabetes Medication</strong>
-                            <div style="font-size: 0.85rem; color: var(--gray-600);">Find patients with diabetes-related medications</div>
+                    <div class="patient-stats">
+                        <div class="patient-stat">
+                            <div class="patient-stat-value">${Math.floor(Math.random() * 5) + 2}</div>
+                            <div class="patient-stat-label">Medications</div>
                         </div>
-                        <div style="background: var(--gray-50); padding: 15px; border-radius: 8px; cursor: pointer;" onclick="document.getElementById('advancedSearch').value='high blood pressure'; performAdvancedSearch();">
-                            <strong>High Blood Pressure</strong>
-                            <div style="font-size: 0.85rem; color: var(--gray-600);">Search for hypertension patients</div>
+                        <div class="patient-stat">
+                            <div class="patient-stat-value">${Math.floor(Math.random() * 3) + 1}</div>
+                            <div class="patient-stat-label">Procedures</div>
                         </div>
-                        <div style="background: var(--gray-50); padding: 15px; border-radius: 8px; cursor: pointer;" onclick="document.getElementById('advancedSearch').value='recent surgery'; performAdvancedSearch();">
-                            <strong>Recent Surgery</strong>
-                            <div style="font-size: 0.85rem; color: var(--gray-600);">Find patients with recent procedures</div>
+                        <div class="patient-stat">
+                            <div class="patient-stat-value">${Math.floor(Math.random() * 4) + 1}</div>
+                            <div class="patient-stat-label">Visits</div>
                         </div>
-                        <div style="background: var(--gray-50); padding: 15px; border-radius: 8px; cursor: pointer;" onclick="document.getElementById('advancedSearch').value='John Smith'; performAdvancedSearch();">
-                            <strong>John Smith</strong>
-                            <div style="font-size: 0.85rem; color: var(--gray-600);">Search by patient name</div>
-                        </div>
+                    </div>
+
+                    <div class="quick-actions">
+                        <button class="quick-action" onclick="event.stopPropagation(); viewTimeline('${patient.patient_id}')">
+                            <i class="fas fa-clock"></i> Timeline
+                        </button>
+                        <button class="quick-action" onclick="event.stopPropagation(); checkRisk('${patient.patient_id}')">
+                            <i class="fas fa-chart-line"></i> Risk
+                        </button>
+                        <button class="quick-action" onclick="event.stopPropagation(); checkInteractions('${patient.patient_id}')">
+                            <i class="fas fa-pills"></i> Drugs
+                        </button>
                     </div>
                 </div>
             `;
-        }
+        }).join('');
 
-        async function generateHighRiskPage() {
-            try {
-                const highRiskData = await apiCall('/ml/high-risk-patients');
-                if (highRiskData.status === 'success') {
-                    return generateHighRiskContent(highRiskData.data.patients);
-                }
-            } catch (error) {
-                // Generate sample high-risk patients
-                const sampleHighRisk = [
-                    { patient_id: 'P001', first_name: 'John', last_name: 'Doe', age: 75, risk_level: 'Critical', risk_score: 85 },
-                    { patient_id: 'P005', first_name: 'Mary', last_name: 'Johnson', age: 68, risk_level: 'High', risk_score: 72 },
-                    { patient_id: 'P012', first_name: 'Robert', last_name: 'Wilson', age: 82, risk_level: 'Critical', risk_score: 91 }
-                ];
-                return generateHighRiskContent(sampleHighRisk);
+        container.innerHTML = `
+            <div class="patients-grid" style="margin-top: 20px;">
+                ${patientsHTML}
+            </div>
+        `;
+    }
+
+    function displaySampleResults(containerId) {
+        // Sample data for when API is not available
+        const samplePatients = [
+            {
+                patient_id: 'P001',
+                first_name: 'John',
+                last_name: 'Smith',
+                date_of_birth: '1980-05-15',
+                gender: 'Male',
+                phone: '(555) 123-4567',
+                email: 'john.smith@email.com'
+            },
+            {
+                patient_id: 'P002',
+                first_name: 'Sarah',
+                last_name: 'Johnson',
+                date_of_birth: '1975-08-22',
+                gender: 'Female',
+                phone: '(555) 234-5678',
+                email: 'sarah.johnson@email.com'
+            },
+            {
+                patient_id: 'P003',
+                first_name: 'Michael',
+                last_name: 'Davis',
+                date_of_birth: '1990-12-03',
+                gender: 'Male',
+                phone: '(555) 345-6789',
+                email: 'michael.davis@email.com'
             }
-        }
+        ];
 
-        function generateHighRiskContent(patients) {
-            const criticalPatients = patients?.filter(p => p.risk_level === 'Critical') || [];
+        displaySearchResults(samplePatients, containerId);
+        showAlert('Showing sample data - API server not connected', 'warning');
+    }
+
+    // Patient Detail Functions
+    async function showPatientDetails(patientId) {
+        try {
+            const patientData = await apiCall(`/patients/${patientId}`);
+            if (patientData.status === 'success') {
+                displayPatientModal(patientData.data);
+            }
+        } catch (error) {
+            // Show sample patient data if API fails
+            displaySamplePatientModal(patientId);
+        }
+    }
+
+    function displayPatientModal(data) {
+        const patient = data.patient;
+        const medications = data.medications || [];
+        const procedures = data.procedures || [];
+        const conditions = data.conditions || [];
+        const visits = data.visits || [];
+
+        document.getElementById('modalPatientName').textContent = `${patient.first_name} ${patient.last_name}`;
+
+        document.getElementById('modalContent').innerHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                <div>
+                    <h4 style="margin-bottom: 10px; color: var(--gray-900);">Patient Information</h4>
+                    <div style="background: var(--gray-50); padding: 15px; border-radius: 8px;">
+                        <div style="margin-bottom: 8px;"><strong>ID:</strong> ${patient.patient_id}</div>
+                        <div style="margin-bottom: 8px;"><strong>Date of Birth:</strong> ${formatDate(patient.date_of_birth)}</div>
+                        <div style="margin-bottom: 8px;"><strong>Gender:</strong> ${patient.gender}</div>
+                        <div style="margin-bottom: 8px;"><strong>Phone:</strong> ${patient.phone || 'N/A'}</div>
+                        <div><strong>Email:</strong> ${patient.email || 'N/A'}</div>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px; color: var(--gray-900);">Quick Stats</h4>
+                    <div style="background: var(--gray-50); padding: 15px; border-radius: 8px;">
+                        <div style="margin-bottom: 8px;"><strong>Medications:</strong> ${medications.length}</div>
+                        <div style="margin-bottom: 8px;"><strong>Procedures:</strong> ${procedures.length}</div>
+                        <div style="margin-bottom: 8px;"><strong>Conditions:</strong> ${conditions.length}</div>
+                        <div><strong>Visits:</strong> ${visits.length}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <h4 style="margin-bottom: 15px; color: var(--gray-900);">
+                    <i class="fas fa-pills" style="color: var(--secondary); margin-right: 8px;"></i>
+                    Current Medications
+                </h4>
+                ${medications.length > 0 ? medications.slice(0, 5).map(med => `
+                    <div style="background: white; border: 1px solid var(--gray-200); padding: 12px; margin-bottom: 8px; border-radius: 6px;">
+                        <div style="display: flex; justify-content: between; align-items: center;">
+                            <div>
+                                <strong>${med.medication_name}</strong> - ${med.dosage}
+                                <div style="font-size: 0.85rem; color: var(--gray-600);">${med.frequency} | For: ${med.condition_treated}</div>
+                            </div>
+                            <span class="risk-badge ${med.status === 'Active' ? 'risk-low' : 'risk-medium'}">${med.status}</span>
+                        </div>
+                    </div>
+                `).join('') : '<p style="color: var(--gray-500);">No medications recorded</p>'}
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <h4 style="margin-bottom: 15px; color: var(--gray-900);">
+                    <i class="fas fa-procedures" style="color: var(--warning); margin-right: 8px;"></i>
+                    Recent Procedures
+                </h4>
+                ${procedures.length > 0 ? procedures.slice(0, 3).map(proc => `
+                    <div style="background: white; border: 1px solid var(--gray-200); padding: 12px; margin-bottom: 8px; border-radius: 6px;">
+                        <div><strong>${proc.procedure_name}</strong> (${proc.procedure_type})</div>
+                        <div style="font-size: 0.85rem; color: var(--gray-600);">
+                            ${formatDate(proc.procedure_date)} | Dr. ${proc.performing_doctor}
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--gray-600);">
+                            Outcome: ${proc.outcome}
+                        </div>
+                    </div>
+                `).join('') : '<p style="color: var(--gray-500);">No procedures recorded</p>'}
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 30px;">
+                <button class="btn btn-primary" onclick="viewTimeline('${patient.patient_id}')">
+                    <i class="fas fa-clock"></i> View Timeline
+                </button>
+                <button class="btn btn-secondary" onclick="checkRisk('${patient.patient_id}')">
+                    <i class="fas fa-chart-line"></i> Risk Assessment
+                </button>
+                <button class="btn btn-secondary" onclick="checkInteractions('${patient.patient_id}')">
+                    <i class="fas fa-pills"></i> Drug Interactions
+                </button>
+            </div>
+        `;
+
+        document.getElementById('patientModal').classList.add('active');
+    }
+
+    function displaySamplePatientModal(patientId) {
+        // Sample patient data when API is not available
+        const sampleData = {
+            patient: {
+                patient_id: patientId,
+                first_name: 'John',
+                last_name: 'Smith',
+                date_of_birth: '1980-05-15',
+                gender: 'Male',
+                phone: '(555) 123-4567',
+                email: 'john.smith@email.com'
+            },
+            medications: [
+                {
+                    medication_name: 'Lisinopril',
+                    dosage: '10mg',
+                    frequency: 'Once daily',
+                    condition_treated: 'Hypertension',
+                    status: 'Active'
+                },
+                {
+                    medication_name: 'Metformin',
+                    dosage: '500mg',
+                    frequency: 'Twice daily',
+                    condition_treated: 'Diabetes',
+                    status: 'Active'
+                }
+            ],
+            procedures: [
+                {
+                    procedure_name: 'Annual Checkup',
+                    procedure_type: 'Diagnostic',
+                    procedure_date: '2024-01-15',
+                    performing_doctor: 'Johnson',
+                    outcome: 'Normal'
+                }
+            ]
+        };
+
+        displayPatientModal(sampleData);
+        showAlert('Showing sample data - API server not connected', 'warning');
+    }
+
+    // Navigation Functions
+    function switchPage(pageName) {
+        // Update navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
+
+        currentPage = pageName;
+
+        // Load page content
+        loadPageContent(pageName);
+    }
+
+    async function loadPageContent(page
