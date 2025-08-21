@@ -1,7 +1,7 @@
 <script>
     // API Configuration - Update this with your actual ngrok URL
     const API_BASE_URL = 'http://localhost:8000'; // Change this to your ngrok URL when running
-
+    
     // Global state
     let currentPage = 'dashboard';
     let allPatients = [];
@@ -23,10 +23,10 @@
             <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'exclamation-triangle'}"></i>
             ${message}
         `;
-
+        
         const content = document.getElementById('contentArea');
         content.insertBefore(alertDiv, content.firstChild);
-
+        
         setTimeout(() => {
             alertDiv.remove();
         }, 5000);
@@ -43,11 +43,11 @@
                 },
                 ...options
             });
-
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-
+            
             const data = await response.json();
             return data;
         } catch (error) {
@@ -92,7 +92,7 @@
     async function performQuickSearch() {
         const query = document.getElementById('quickSearch').value.trim();
         const searchType = document.getElementById('searchType').value;
-
+        
         if (!query) {
             showAlert('Please enter a search query', 'warning');
             return;
@@ -114,7 +114,7 @@
 
     function displaySearchResults(patients, containerId) {
         const container = document.getElementById(containerId);
-
+        
         if (!patients || patients.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
@@ -129,7 +129,7 @@
         const patientsHTML = patients.slice(0, 6).map(patient => {
             const initials = getPatientInitials(patient.first_name, patient.last_name);
             const riskLevel = getRiskLevel(patient);
-
+            
             return `
                 <div class="patient-card" onclick="showPatientDetails('${patient.patient_id}')">
                     <div class="patient-header">
@@ -140,7 +140,7 @@
                         </div>
                         <div class="risk-badge risk-${riskLevel.toLowerCase()}">${riskLevel}</div>
                     </div>
-
+                    
                     <div class="patient-details">
                         <div class="patient-detail">
                             <i class="fas fa-birthday-cake"></i>
@@ -159,7 +159,7 @@
                             <span>${patient.email || 'N/A'}</span>
                         </div>
                     </div>
-
+                    
                     <div class="patient-stats">
                         <div class="patient-stat">
                             <div class="patient-stat-value">${Math.floor(Math.random() * 5) + 2}</div>
@@ -174,7 +174,7 @@
                             <div class="patient-stat-label">Visits</div>
                         </div>
                     </div>
-
+                    
                     <div class="quick-actions">
                         <button class="quick-action" onclick="event.stopPropagation(); viewTimeline('${patient.patient_id}')">
                             <i class="fas fa-clock"></i> Timeline
@@ -228,163 +228,14 @@
                 email: 'michael.davis@email.com'
             }
         ];
-
+        
         displaySearchResults(samplePatients, containerId);
         showAlert('Showing sample data - API server not connected', 'warning');
     }
 
-    // Patient Detail Functions
-    async function showPatientDetails(patientId) {
-        try {
-            const patientData = await apiCall(`/patients/${patientId}`);
-            if (patientData.status === 'success') {
-                displayPatientModal(patientData.data);
-            }
-        } catch (error) {
-            // Show sample patient data if API fails
-            displaySamplePatientModal(patientId);
-        }
-    }
-
-    function displayPatientModal(data) {
-        const patient = data.patient;
-        const medications = data.medications || [];
-        const procedures = data.procedures || [];
-        const conditions = data.conditions || [];
-        const visits = data.visits || [];
-
-        document.getElementById('modalPatientName').textContent = `${patient.first_name} ${patient.last_name}`;
-
-        document.getElementById('modalContent').innerHTML = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-                <div>
-                    <h4 style="margin-bottom: 10px; color: var(--gray-900);">Patient Information</h4>
-                    <div style="background: var(--gray-50); padding: 15px; border-radius: 8px;">
-                        <div style="margin-bottom: 8px;"><strong>ID:</strong> ${patient.patient_id}</div>
-                        <div style="margin-bottom: 8px;"><strong>Date of Birth:</strong> ${formatDate(patient.date_of_birth)}</div>
-                        <div style="margin-bottom: 8px;"><strong>Gender:</strong> ${patient.gender}</div>
-                        <div style="margin-bottom: 8px;"><strong>Phone:</strong> ${patient.phone || 'N/A'}</div>
-                        <div><strong>Email:</strong> ${patient.email || 'N/A'}</div>
-                    </div>
-                </div>
-                <div>
-                    <h4 style="margin-bottom: 10px; color: var(--gray-900);">Quick Stats</h4>
-                    <div style="background: var(--gray-50); padding: 15px; border-radius: 8px;">
-                        <div style="margin-bottom: 8px;"><strong>Medications:</strong> ${medications.length}</div>
-                        <div style="margin-bottom: 8px;"><strong>Procedures:</strong> ${procedures.length}</div>
-                        <div style="margin-bottom: 8px;"><strong>Conditions:</strong> ${conditions.length}</div>
-                        <div><strong>Visits:</strong> ${visits.length}</div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 25px;">
-                <h4 style="margin-bottom: 15px; color: var(--gray-900);">
-                    <i class="fas fa-pills" style="color: var(--secondary); margin-right: 8px;"></i>
-                    Current Medications
-                </h4>
-                ${medications.length > 0 ? medications.slice(0, 5).map(med => `
-                    <div style="background: white; border: 1px solid var(--gray-200); padding: 12px; margin-bottom: 8px; border-radius: 6px;">
-                        <div style="display: flex; justify-content: between; align-items: center;">
-                            <div>
-                                <strong>${med.medication_name}</strong> - ${med.dosage}
-                                <div style="font-size: 0.85rem; color: var(--gray-600);">${med.frequency} | For: ${med.condition_treated}</div>
-                            </div>
-                            <span class="risk-badge ${med.status === 'Active' ? 'risk-low' : 'risk-medium'}">${med.status}</span>
-                        </div>
-                    </div>
-                `).join('') : '<p style="color: var(--gray-500);">No medications recorded</p>'}
-            </div>
-
-            <div style="margin-bottom: 25px;">
-                <h4 style="margin-bottom: 15px; color: var(--gray-900);">
-                    <i class="fas fa-procedures" style="color: var(--warning); margin-right: 8px;"></i>
-                    Recent Procedures
-                </h4>
-                ${procedures.length > 0 ? procedures.slice(0, 3).map(proc => `
-                    <div style="background: white; border: 1px solid var(--gray-200); padding: 12px; margin-bottom: 8px; border-radius: 6px;">
-                        <div><strong>${proc.procedure_name}</strong> (${proc.procedure_type})</div>
-                        <div style="font-size: 0.85rem; color: var(--gray-600);">
-                            ${formatDate(proc.procedure_date)} | Dr. ${proc.performing_doctor}
-                        </div>
-                        <div style="font-size: 0.85rem; color: var(--gray-600);">
-                            Outcome: ${proc.outcome}
-                        </div>
-                    </div>
-                `).join('') : '<p style="color: var(--gray-500);">No procedures recorded</p>'}
-            </div>
-
-            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 30px;">
-                <button class="btn btn-primary" onclick="viewTimeline('${patient.patient_id}')">
-                    <i class="fas fa-clock"></i> View Timeline
-                </button>
-                <button class="btn btn-secondary" onclick="checkRisk('${patient.patient_id}')">
-                    <i class="fas fa-chart-line"></i> Risk Assessment
-                </button>
-                <button class="btn btn-secondary" onclick="checkInteractions('${patient.patient_id}')">
-                    <i class="fas fa-pills"></i> Drug Interactions
-                </button>
-            </div>
-        `;
-
-        document.getElementById('patientModal').classList.add('active');
-    }
-
-    function displaySamplePatientModal(patientId) {
-        // Sample patient data when API is not available
-        const sampleData = {
-            patient: {
-                patient_id: patientId,
-                first_name: 'John',
-                last_name: 'Smith',
-                date_of_birth: '1980-05-15',
-                gender: 'Male',
-                phone: '(555) 123-4567',
-                email: 'john.smith@email.com'
-            },
-            medications: [
-                {
-                    medication_name: 'Lisinopril',
-                    dosage: '10mg',
-                    frequency: 'Once daily',
-                    condition_treated: 'Hypertension',
-                    status: 'Active'
-                },
-                {
-                    medication_name: 'Metformin',
-                    dosage: '500mg',
-                    frequency: 'Twice daily',
-                    condition_treated: 'Diabetes',
-                    status: 'Active'
-                }
-            ],
-            procedures: [
-                {
-                    procedure_name: 'Annual Checkup',
-                    procedure_type: 'Diagnostic',
-                    procedure_date: '2024-01-15',
-                    performing_doctor: 'Johnson',
-                    outcome: 'Normal'
-                }
-            ]
-        };
-
-        displayPatientModal(sampleData);
-        showAlert('Showing sample data - API server not connected', 'warning');
-    }
-
-    // Navigation Functions
-    function switchPage(pageName) {
-        // Update navigation
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
-        document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
-
-        currentPage = pageName;
-
-        // Load page content
-        loadPageContent(pageName);
-    }
-
-    async function loadPageContent(page
+    // ✅ FIX: Hide loader once the page is fully loaded
+    window.addEventListener("load", () => {
+        hideLoader();
+        loadDashboardStats(); // optional: load stats immediately on load
+    });
+</script>
